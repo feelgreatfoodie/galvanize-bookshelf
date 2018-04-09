@@ -39,7 +39,11 @@ router.post('/books', (req, res, next) => {
     'cover_url': coverUrl
   }
 
-  if( !newBook ) return next({ status: 400, message: 'Could not create new book'})
+  if( !title ) return next({ status: 400, message: 'Title must not be blank'})
+  if( !author ) return next({ status: 400, message: 'Author must not be blank'})
+  if( !genre ) return next({ status: 400, message: 'Genre must not be blank'})
+  if( !description ) return next({ status: 400, message: 'Description must not be blank'})
+  if( !coverUrl ) return next({ status: 400, message: 'Cover Url must not be blank'})
   knex('books')
     .insert(newBook)
     .returning('*')

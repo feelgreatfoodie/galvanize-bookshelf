@@ -44,13 +44,14 @@ router.post('/books', (req, res, next) => {
   if( !genre ) return next({ status: 400, message: 'Genre must not be blank'})
   if( !description ) return next({ status: 400, message: 'Description must not be blank'})
   if( !coverUrl ) return next({ status: 400, message: 'Cover Url must not be blank'})
+
   knex('books')
     .insert(newBook)
     .returning('*')
-    .then((book) => {
+    .then(book => {
       res.status(200).send(humps.camelizeKeys(book[0]))
     })
-    .catch((err) => {
+    .catch(err => {
      next(err)
    })
 })

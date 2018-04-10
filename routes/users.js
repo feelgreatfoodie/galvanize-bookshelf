@@ -5,7 +5,7 @@ const knex = require('../knex')
 const humps = require('humps')
 const bcrypt = require('bcrypt')
 const saltRounds = 10
-// eslint-disable-next-line new-cap
+const boom = require('boom')
 const router = express.Router()
 
 // YOUR CODE HERE
@@ -17,22 +17,21 @@ router.post('/users', (req, res, next) => {
     password
   } = req.body
 
-  if (!firstName) return next({
-    status: 400,
-    message: 'First name must not be blank'
-  })
-  if (!lastName) return next({
-    status: 400,
-    message: 'Last name must not be blank'
-  })
-  if (!email) return next({
-    status: 400,
-    message: 'Email must not be blank'
-  })
-  if (!password) return next({
-    status: 400,
-    message: 'Password must not be blank'
-  })
+  if( !firstName ) next(boom.badRequest('First name must not be blank'))
+  if( !lastName ) next(boom.badRequest('Last name must not be blank'))
+  if( !email ) next(boom.badRequest('Email must not be blank'))
+  if( !password || password.length < 8 ) next(boom.badRequest('Password must be at least 8 characters long'))
+
+  const checkForExistingEmail = (email) => {
+    knex('users')
+      .select('email')
+      .where('email', email)
+      .then(user => {
+        if(user[0]) next(boom.badRequest('Email already exists'))
+      })
+  }
+
+  checkForExistingEmail(email)
 
   bcrypt.hash(password, saltRounds, function(err, hashed_password) {
     // Store hash in your password DB.
@@ -54,5 +53,20 @@ router.post('/users', (req, res, next) => {
         next(err)
       })
   })
+
+  function getEmailFromDB(email){
+    knex('users')
+      .select('email')
+      .where('email', email)
+      .then(e => {
+        // const x = emails.filter(e => e.email=== email).length
+        return e[0].email
+        // return (emails.filter(e => e.email=== email).length > 0)
+      })
+      .catch(err => {
+        next(err)
+      })
+  }
+
 })
 module.exports = router;

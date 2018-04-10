@@ -24,7 +24,7 @@ suite('part3 routes bonus', addDatabaseHooks(() => {
       })
       .expect('Content-Type', /plain/)
       .expect(400, 'Email must not be blank', done);
-  });
+  })
 
   test('POST /users with no password', (done) => {
     request(server)
@@ -39,7 +39,7 @@ suite('part3 routes bonus', addDatabaseHooks(() => {
       .expect('Content-Type', /plain/)
       .expect(400, 'Password must be at least 8 characters long', done);
   });
-
+  
   test('POST /users with existing email', (done) => {
     /* eslint-disable no-sync */
     knex('users')

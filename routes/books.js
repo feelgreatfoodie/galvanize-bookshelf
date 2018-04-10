@@ -1,8 +1,8 @@
 'use strict';
 const knex = require('../knex')
 const humps = require('humps')
-const express = require('express');
-// eslint-disable-next-line new-cap
+const express = require('express')
+const boom = require('boom')
 const router = express.Router();
 
 // YOUR CODE HERE
@@ -18,10 +18,12 @@ router.get('/books', (req, res, next) => {
 })
 router.get('/books/:id', (req, res, next) => {
   const { id } = req.params
+  if(typeof(id) !== 'number') next(boom.notFound('Not Found'))
+
   knex('books')
     .where('id', id)
     .then(book => {
-      if(book.length === 0) return next({status: 404, message: 'Book not found'})
+      if(!book[0]) next(boom.notFound('Not Found'))
       res.status(200).send(humps.camelizeKeys(book[0]))
     })
     .catch((err) => {
@@ -39,11 +41,11 @@ router.post('/books', (req, res, next) => {
     'cover_url': coverUrl
   }
 
-  if( !title ) return next({ status: 400, message: 'Title must not be blank'})
-  if( !author ) return next({ status: 400, message: 'Author must not be blank'})
-  if( !genre ) return next({ status: 400, message: 'Genre must not be blank'})
-  if( !description ) return next({ status: 400, message: 'Description must not be blank'})
-  if( !coverUrl ) return next({ status: 400, message: 'Cover Url must not be blank'})
+  if( !title ) next(boom.badRequest('Title must not be blank'))
+  if( !author ) next(boom.badRequest('Author must not be blank'))
+  if( !genre ) next(boom.badRequest('Genre must not be blank'))
+  if( !description ) next(boom.badRequest('Description must not be blank'))
+  if( !coverUrl ) next(boom.badRequest('Cover URL must not be blank'))
 
   knex('books')
     .insert(newBook)
@@ -61,12 +63,15 @@ router.patch('/books/:id', (req, res, next) => {
   const { title, author, genre, description, coverUrl } = req.body
   const cover_url = coverUrl
 
+  if(typeof(id) !== 'number') next(boom.notFound('Not Found'))
+
+
   knex('books')
   .where('id', id)
     .update( {title, author, genre, description, cover_url} )
     .returning('*')
     .then((book) => {
-      if(book.length === 0) return next({status: 404, message: 'Book not found'})
+      if(!book[0]) next(boom.notFound('Not Found'))
       res.status(200).send(humps.camelizeKeys(book[0]))
     })
     .catch((err) => {
@@ -76,12 +81,14 @@ router.patch('/books/:id', (req, res, next) => {
 // DELETE ONE record for this table
 router.delete('/books/:id', (req, res, next) => {
   const { id } = req.params
+  if(typeof(id) !== 'number') next(boom.notFound('Not Found'))
+
   knex('books')
   .where('id', id)
   .del()
   .returning(['title', 'author', 'genre', 'description', 'cover_url'])
   .then((book) => {
-    if(book.length === 0) return next({status: 404, message: 'Book not found'})
+    if(!book[0]) next(boom.notFound('Not Found'))
     res.status(200).send(humps.camelizeKeys(book[0]))
   })
 })

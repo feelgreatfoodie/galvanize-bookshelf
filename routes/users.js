@@ -5,6 +5,7 @@ const knex = require('../knex')
 const humps = require('humps')
 const bcrypt = require('bcrypt')
 const saltRounds = 10
+const jwt = require('jsonwebtoken')
 const boom = require('boom')
 const router = express.Router()
 
@@ -33,7 +34,7 @@ router.post('/users', (req, res, next) => {
 
   checkForExistingEmail(email)
 
-  bcrypt.hash(password, saltRounds, function(err, hashed_password) {
+  bcrypt.hash(password, saltRounds, (err, hashed_password) => {
     // Store hash in your password DB.
 
     const newUser = {
@@ -47,6 +48,8 @@ router.post('/users', (req, res, next) => {
       .insert(newUser)
       .returning(['id', 'first_name', 'last_name', 'email'])
       .then(user => {
+        const token = jwt.sign({'email': req.body.email }, process.env.JWT_KEY)
+        res.setHeader('Set-Cookie', `token=${token}; Path=\/;.HttpOnly`)
         res.status(200).send(humps.camelizeKeys(user[0]))
       })
       .catch(err => {
@@ -59,9 +62,7 @@ router.post('/users', (req, res, next) => {
       .select('email')
       .where('email', email)
       .then(e => {
-        // const x = emails.filter(e => e.email=== email).length
         return e[0].email
-        // return (emails.filter(e => e.email=== email).length > 0)
       })
       .catch(err => {
         next(err)

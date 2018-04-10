@@ -17,23 +17,32 @@ router.get('/token', (req, res, next) => {
 
 router.post('/token', (req, res, next) => {
   const { email, password } = req.body
+  if( !email ) next(boom.badRequest('Email must not be blank'))
+  if( !password ) next(boom.badRequest('Password must not be blank'))
 
   knex('users')
     .where('email', email)
     .select('id', 'email', 'first_name', 'last_name', 'hashed_password')
     .then(user => {
+
       if(!user[0]) next(boom.badRequest('Bad email or password'))
-      else{
-        const token = jwt.sign({'email': req.body.email }, process.env.JWT_KEY)
-        res.setHeader('Set-Cookie', `token=${token}; Path=\/;.HttpOnly`)
-        const userInfo = {
-          'id': user[0].id,
-          'email': user[0].email,
-          'first_name': user[0].first_name,
-          'last_name': user[0].last_name
+
+      bcrypt.compare(password, user[0].hashed_password, (err, result) => {
+        if(err) throw err
+        if(!result) next(boom.badRequest('Bad email or password'))
+        else {
+          const token = jwt.sign({'email': req.body.email }, process.env.JWT_KEY)
+          res.setHeader('Set-Cookie', `token=${token}; Path=\/;.HttpOnly`)
+
+          const userInfo = {
+            'id': user[0].id,
+            'email': user[0].email,
+            'first_name': user[0].first_name,
+            'last_name': user[0].last_name
+          }
+          res.status(200).send(humps.camelizeKeys(userInfo))
         }
-        res.status(200).send(humps.camelizeKeys(userInfo))
-      }
+      })
     })
     .catch(err => {
       next(err)

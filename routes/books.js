@@ -16,6 +16,7 @@ router.get('/books', (req, res, next) => {
      next(err)
    })
 })
+
 router.get('/books/:id', (req, res, next) => {
   const { id } = req.params
   if(typeof(id) !== 'number') next(boom.notFound('Not Found'))

@@ -42,7 +42,9 @@ const findBook = (req, res, next) =>{
 }
 
 router.get('/favorites', getUserId, (req, res, next) => {
+  console.log('hola, me llamo: ', req.userId)
   knex('favorites')
+    .where('user_id', req.userId)
     .select('favorites.id', 'book_id', 'user_id', 'favorites.created_at', 'favorites.updated_at', 'books.id', 'title', 'author', 'genre', 'description', 'cover_url')
     .join('books', 'book_id', 'books.id')
     .returning ('*')

@@ -42,7 +42,6 @@ const findBook = (req, res, next) =>{
 }
 
 router.get('/favorites', getUserId, (req, res, next) => {
-  console.log('hola, me llamo: ', req.userId)
   knex('favorites')
     .where('user_id', req.userId)
     .select('favorites.id', 'book_id', 'user_id', 'favorites.created_at', 'favorites.updated_at', 'books.id', 'title', 'author', 'genre', 'description', 'cover_url')
@@ -60,6 +59,7 @@ router.get('/favorites/check', getUserId, (req, res, next) => {
   const { bookId } = req.query
   knex('favorites')
     .where('book_id', bookId)
+    .where('user_id', req.userId)
     .select('*')
     .then(book => {
       res.status(200).send(book.length > 0)
@@ -75,6 +75,7 @@ router.post('/favorites', getUserId, findBook, (req, res, next) => {
 
 
   knex('favorites')
+    .where('user_id', req.userId)
     .insert(newFav)
     .returning(['id', 'book_id', 'user_id'])
     .then(newFav => {
@@ -87,9 +88,9 @@ router.post('/favorites', getUserId, findBook, (req, res, next) => {
 })
 
 router.delete('/favorites', getUserId, findBook, (req, res, next) => {
-  console.log(req.method)
   const { bookId } = req.body
   knex('favorites')
+    .where('user_id', req.userId)
     .where('book_id', bookId)
     .del()
     .returning(['book_id', 'user_id'])
